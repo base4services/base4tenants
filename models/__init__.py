@@ -1,3 +1,3 @@
 
-from .generated_tenant_model import *
+from .generated_tenants_model import *
 
