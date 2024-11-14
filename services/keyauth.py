@@ -1,25 +1,25 @@
-from pydantic.v1.datetime_parse import datetime_re
-import dotenv
+import datetime
+import json
+import os
 
-from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
+import dotenv
+import httpx
+import jwt
+import slugify
 from base4.service.base import BaseService
+from base4.service.exceptions import ServiceException
+from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
+from pydantic.v1.datetime_parse import datetime_re
 
 import services.tenants.models as models
 import services.tenants.schemas as schemas
 
 from ._db_conn import get_conn_name
 
-from base4.service.exceptions import ServiceException
-import os
-import datetime
-import jwt
-import json
-import httpx
-import slugify
-
 logger = get_logger()
 
 from base4.utilities.files import read_file
+
 dotenv.load_dotenv()
 default_id_user = os.getenv('DEFAULT_ID_USER', '00000000-0000-0000-0000-000000000000')
 
@@ -32,8 +32,7 @@ async def check_biznisoft_licence_on_thilo(key):
     try:
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(f'https://biznisoft.thilo.services/api/software_licence/get-bp-by-key',
-                                         data=json.dumps({'key': key}))
+                response = await client.post(f'https://biznisoft.thilo.services/api/software_licence/get-bp-by-key', data=json.dumps({'key': key}))
             except Exception as e:
                 raise
 
@@ -44,28 +43,28 @@ async def check_biznisoft_licence_on_thilo(key):
     except Exception as e:
         raise
 
+
 @class_exception_traceback_logging(logger)
 class KeyAuthService(BaseService[models.Tenant]):
     def __init__(self):
         super().__init__(schemas.UserSchema, models.User, get_conn_name())
 
     async def check_by_key(self, key):
-        return {'business_partner-slug': 'digital-cube', }
+        return {
+            'business_partner-slug': 'digital-cube',
+        }
 
     async def generate_token(self, key: str):
         licence_info = await check_biznisoft_licence_on_thilo(key)
 
-        slug = slugify.slugify(licence_info['bp']['display_name']+'-'+licence_info['bp']['tax_number'])
+        slug = slugify.slugify(licence_info['bp']['display_name'] + '-' + licence_info['bp']['tax_number'])
         slug = slug[:255]
 
-        tenant_display_name = licence_info['bp']['display_name']+' ('+licence_info['bp']['tax_number']+')'
-
-
-
+        tenant_display_name = licence_info['bp']['display_name'] + ' (' + licence_info['bp']['tax_number'] + ')'
 
         try:
-            q= models.Tenant.filter(code=slug)
-            s=q.sql()
+            q = models.Tenant.filter(code=slug)
+            s = q.sql()
             c = await models.Tenant.all().count()
 
             tenant = await models.Tenant.filter(code=slug).get_or_none()
@@ -74,23 +73,23 @@ class KeyAuthService(BaseService[models.Tenant]):
 
         if not tenant:
             try:
-                tenant = models.Tenant(code=slug,
-                                       display_name=tenant_display_name,
-                                       logged_user_id=default_id_user,
-                                       )
+                tenant = models.Tenant(
+                    code=slug,
+                    display_name=tenant_display_name,
+                    logged_user_id=default_id_user,
+                )
                 await tenant.save()
             except Exception as e:
                 raise
-        service_user = await models.User.filter(username='service',
-                                                tenant=tenant
-                                                ).get_or_none()
+        service_user = await models.User.filter(username='service', tenant=tenant).get_or_none()
         if not service_user:
             try:
-                service_user = models.User(username='service',
-                                           tenant=tenant,
-                                           password=key,
-                                           logged_user_id=default_id_user,
-                                           )
+                service_user = models.User(
+                    username='service',
+                    tenant=tenant,
+                    password=key,
+                    logged_user_id=default_id_user,
+                )
                 await service_user.save()
             except Exception as e:
                 raise
@@ -101,7 +100,6 @@ class KeyAuthService(BaseService[models.Tenant]):
                 'id_tenant': str(service_user.tenant_id),
                 'exp': int(datetime.datetime.fromisoformat(licence_info['licence']['expiration_date']).timestamp()),
                 # 'exp': datetime.datetime.now() + datetime.timedelta(days=2),
-
             }
         except Exception as e:
             raise

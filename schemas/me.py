@@ -1,7 +1,9 @@
+import datetime
 import uuid
 from typing import Optional
+
 import pydantic
-import datetime
+
 
 class MeResponse(pydantic.BaseModel):
     id: uuid.UUID
@@ -13,6 +15,7 @@ class MeResponse(pydantic.BaseModel):
     password last changed
     last login
     '''
+
 
 class LoginResponse(pydantic.BaseModel):
     token: str

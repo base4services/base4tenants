@@ -1,20 +1,17 @@
-import dotenv
+import datetime
 import os
-from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
+
+import dotenv
+import jwt
 from base4.service.base import BaseService
+from base4.service.exceptions import ServiceException
+from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
 
 import services.tenants.models as models
 import services.tenants.schemas as schemas
+from services.tenants.schemas.me import LoginResponse, MeResponse
 
 from ._db_conn import get_conn_name
-
-
-from base4.service.exceptions import ServiceException
-import os
-import datetime
-import jwt
-
-from services.tenants.schemas.me import MeResponse, LoginResponse
 
 logger = get_logger()
 
@@ -79,9 +76,7 @@ class UsersService(BaseService[models.Tenant]):
                 id_tenant=user.tenant_id,
             )
 
-            res = LoginResponse(token=self.generate_token(payload),
-                                 exp=payload['exp'],
-                                 me=me)
+            res = LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=me)
 
             return res
 
@@ -91,8 +86,7 @@ class UsersService(BaseService[models.Tenant]):
     async def me(self, session) -> MeResponse:
 
         try:
-            me = await self.model.filter(id=session.user_id, tenant_id=session.tenant_id,
-                                         is_deleted=False).get_or_none()
+            me = await self.model.filter(id=session.user_id, tenant_id=session.tenant_id, is_deleted=False).get_or_none()
 
             res = MeResponse(
                 id=me.id,
@@ -109,8 +103,7 @@ class UsersService(BaseService[models.Tenant]):
 
         nr_of_users = await self.model.all().count()
         if nr_of_users > 0:
-            raise ServiceException('CAN_NOT_INITIALIZE_TENANT',
-                                   'Primary tenant already initialized')
+            raise ServiceException('CAN_NOT_INITIALIZE_TENANT', 'Primary tenant already initialized')
 
         try:
             user = self.model(
