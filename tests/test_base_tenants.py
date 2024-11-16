@@ -8,7 +8,6 @@ from unittest.mock import patch
 from .test_base import TestBase
 from contextlib import ExitStack
 
-from .test_base import TestBase
 
 class TestBaseTenants(TestBase):
     services = ['tenants']
@@ -52,4 +51,3 @@ class TestBaseTenants(TestBase):
         assert healthy_test.status_code == 200
 
         ...
-
