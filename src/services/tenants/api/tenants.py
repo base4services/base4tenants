@@ -21,6 +21,6 @@ create_endpoints(
     endpoints_config,
     service_name='tenants',
     singular_object_name='tenant',
-    plural_object_name='tenantss',
+    plural_object_name='tenants',
     functions={'get_single', 'create', 'update', 'get'},
 )
