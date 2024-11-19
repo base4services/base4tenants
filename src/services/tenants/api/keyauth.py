@@ -7,8 +7,8 @@ from base4.api.crud import create_endpoints
 from base4.utilities.security.jwt import DecodedToken, verify_token
 from fastapi import Depends
 
-import services.tenants.schemas as schemas
-import services.tenants.services as services
+import services.__SERVICE_NAME__.schemas as schemas
+import services.__SERVICE_NAME__.services as services
 
 from . import router
 
@@ -18,7 +18,7 @@ async def key_auth(request: schemas.KeyAuth) -> Dict:
     service = services.KeyAuthService()
 
     try:
-        import services.tenants.models as models
+        import services.__SERVICE_NAME__.models as models
 
         c = await models.Tenant.all().count()
     except Exception as e:

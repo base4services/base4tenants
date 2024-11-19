@@ -5,9 +5,9 @@ from base4.api.crud import create_endpoints
 from base4.utilities.security.jwt import DecodedToken, verify_token
 from fastapi import Depends
 
-import services.tenants.schemas as schemas
-import services.tenants.services as services
-from services.tenants.schemas.me import LoginResponse, MeResponse
+import services.__SERVICE_NAME__.schemas as schemas
+import services.__SERVICE_NAME__.services as services
+from services.__SERVICE_NAME__.schemas.me import LoginResponse, MeResponse
 
 from . import router
 

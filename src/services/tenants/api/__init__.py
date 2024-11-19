@@ -8,7 +8,7 @@ from .health import *
 from .initialize import *
 from .keyauth import *
 from .options import *
-from .tenants import *
+from .__SERVICE_NAME__ import *
 from .users import *
 
-app.include_router(router, prefix="/api/tenants")
+app.include_router(router, prefix="/api/__SERVICE_NAME__")

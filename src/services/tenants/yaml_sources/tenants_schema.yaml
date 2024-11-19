@@ -13,7 +13,7 @@ option:
 
 
 
-tenant:
+__SERVICE_NAME__:
 
   __schemas:
     all: TenantSchema
@@ -70,4 +70,3 @@ user:
   mobile_phone:
     mandatory: False
     type: str
-
