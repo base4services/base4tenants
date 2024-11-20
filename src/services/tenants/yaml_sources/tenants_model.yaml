@@ -2,8 +2,8 @@ option:
 
   __meta:
 
-    table_name: tenants_options
-    app: tenants
+    table_name: __SERVICE_NAME___options
+    app: __SERVICE_NAME__
 
   key:
     field: "fields.CharField(255, null=False, unique=True)"
@@ -12,12 +12,12 @@ option:
     field: "fields.TextField(null=True)"
 
 
-tenant:
+__SERVICE_NAME__:
 
   __meta:
 
-    table_name: tenants
-    app: tenants
+    table_name: __SERVICE_NAME__
+    app: __SERVICE_NAME__
 
   code:
     field: "fields.CharField(255, null=False, unique=True)"
@@ -31,8 +31,8 @@ user:
   __meta:
 
     table_name: tenants_users
-    app: tenants
-    unique_together: ( ('tenant', 'username' ), )
+    app: __SERVICE_NAME__
+    unique_together: ( ('__SERVICE_NAME__', 'username' ), )
 
   tenant:
     field: "fields.ForeignKeyField('tenants.Tenant', index=True, on_delete=tortoise.fields.base.OnDelete.RESTRICT, related_name='users')"
@@ -70,4 +70,3 @@ user:
 
     user:
       field: "fields.OneToOneField('tenants.User', index=True, related_name='cache11')"
-

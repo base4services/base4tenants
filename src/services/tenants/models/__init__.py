@@ -1,1 +1,1 @@
-from .generated_tenants_model import *
+from .generated___SERVICE_NAME___model import *
