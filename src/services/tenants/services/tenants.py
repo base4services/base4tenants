@@ -4,8 +4,8 @@ from base4.service.base import BaseService
 from base4.service.exceptions import ServiceException
 from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
 
-import services.__SERVICE_NAME__.models as models
-import services.__SERVICE_NAME__.schemas as schemas
+import services.tenants.models as models
+import services.tenants.schemas as schemas
 
 from ._db_conn import get_conn_name
 

@@ -5,9 +5,9 @@ import os
 import pprint
 from io import StringIO
 from unittest.mock import patch
-from .test_base import TestBase
 from contextlib import ExitStack
 
+from .test_base import TestBase
 
 class TestBaseTenants(TestBase):
     services = ['tenants']

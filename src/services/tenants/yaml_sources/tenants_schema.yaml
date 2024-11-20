@@ -13,7 +13,7 @@ option:
 
 
 
-__SERVICE_NAME__:
+tenant:
 
   __schemas:
     all: TenantSchema

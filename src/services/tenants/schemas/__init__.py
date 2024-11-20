@@ -1,5 +1,5 @@
-from .__SERVICE_NAME__ import *
+from .tenants import *
 from .users import *
-from .generated___SERVICE_NAME___schema import *
+from .generated_tenants_schema import *
 
 from .keyauth import *
