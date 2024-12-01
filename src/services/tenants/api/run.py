@@ -84,6 +84,7 @@ class APIService(BaseAPIController):
                 500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
                 )
         
+        
 router = APIRouter()
 APIService(router)
 app.include_router(router, prefix='/api/tenants')
