@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from .test_base import TestBase
 from base4.utilities.service.startup import service as app
 
+
 class TestBaseTenants(TestBase):
     services = ['tenants']
 
@@ -120,11 +121,11 @@ class TestBaseTenantsAPIV2:
         yield
         await shutdown_event()
         
-    async def request(self, method: str, url: str, body: dict = None, params=None, headers={}, files=[]):
+    async def request(self, method: str, url: str, body: dict = None, data={},params=None, headers={}, files=[]):
         if 'Authorization' not in headers:
             if self.current_logged_user and "token" in self.current_logged_user and self.current_logged_user["token"]:
                 headers['Authorization'] = f'Bearer {self.current_logged_user["token"]}'
-                
-        response = self.client.request(method=method, url=url, json=body, params=params, headers=headers,
+        
+        response = self.client.request(method=method, url=url, json=body, data=data, params=params, headers=headers,
                                        cookies={'token': f'{self.current_logged_user["token"]}' if self.current_logged_user and "token" in self.current_logged_user else None,},files=files)
         return response

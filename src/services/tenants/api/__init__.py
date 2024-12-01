@@ -1,6 +1,5 @@
 import os
 from fastapi import APIRouter
-
 router = APIRouter()
 
 from base4.utilities.service.startup import service as app
@@ -10,6 +9,3 @@ import_all_from_dir(
     package=__name__,
     namespace=globals()
 )
-
-
-app.include_router(router, prefix="/api/tenants")

@@ -1,14 +1,18 @@
-# THIS FILE IS GENERATED, DO NOT EDIT DIRECTLY
-# USE GEN -s tenants --upgarde to install new version
-
+import datetime
+from base4.utilities.service.base import api
 from . import router
+from base4.utilities.service.startup import service as app
+from base4.utilities.service.base import BaseAPIController
+from fastapi import Request
 
 
-@router.get('/healthy')
-async def healthy():
-    # import services.tenants.models
-    # try:
-    #     c = await services.tenants.models.Tenant.all().count()
-    # except Exception as e:
-    #     raise
-    return {'status': 'healthy', 'service': 'tenants', 'library': 'services'}
+class HealthyAPIService(BaseAPIController):
+    @api(
+        path='/healthy',
+    )
+    async def healthy(self, request: Request):
+        return {'status': 'ok'}
+
+
+HealthyAPIService(router)
+app.include_router(router, prefix='/api/tenants')
