@@ -110,7 +110,7 @@ class TestBaseTenantsAPIV2:
         
         for service in self.services:
             try:
-                module = importlib.import_module(f'services.{service}.api')
+                module = importlib.import_module(f'services.{service}.api.run')
                 self.app.include_router(module.router, prefix=f"/api/{service}")
             except Exception as e:
                 raise
