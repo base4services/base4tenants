@@ -27,9 +27,7 @@ class APIService(BaseAPIController):
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
-            raise base4.service.exceptions.HTTPException(
-                500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
-                )
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
         methods=['GET'],
@@ -42,9 +40,7 @@ class APIService(BaseAPIController):
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
-            raise base4.service.exceptions.HTTPException(
-                500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
-                )
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
         methods=['POST'],
@@ -63,9 +59,7 @@ class APIService(BaseAPIController):
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
-            raise base4.service.exceptions.HTTPException(
-                500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
-                )
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
         methods=['POST'],
@@ -79,9 +73,7 @@ class APIService(BaseAPIController):
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
-            raise base4.service.exceptions.HTTPException(
-                500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
-                )
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
         
         
 router = APIRouter()
