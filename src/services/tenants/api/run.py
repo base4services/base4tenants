@@ -16,7 +16,6 @@ class APIService(BaseAPIController):
         self.service = services
         super().__init__(router)
         
-    
     @api(
         methods=['POST'],
         path='/users/login',
