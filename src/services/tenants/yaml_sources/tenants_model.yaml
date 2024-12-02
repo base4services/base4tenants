@@ -61,6 +61,12 @@ user:
   mobile_phone:
     field: "fields.CharField(255, null=True)"
 
+  id_role:
+    field: "fields.SmallIntField(null=True)"
+
+  permissions:
+    field: "fields.JSONField(default={})"
+
   __cache11:
 
     __meta:
