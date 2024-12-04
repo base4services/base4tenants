@@ -1,6 +1,6 @@
 import csv
 import datetime
-import json
+import ujson as json
 import os
 import pytest
 import pprint
@@ -11,6 +11,8 @@ from base4.utilities.service.startup import shutdown_event, startup_event
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from base4.utilities.service.startup import service as app
+import uuid
+import httpx
 
 
 @pytest.mark.asyncio
@@ -75,14 +77,19 @@ class TestBaseTenantsAPIV2:
         yield
         await shutdown_event()
         
-    async def request(self, method: str, url: str, json_data: dict = None, data={}, params=None, headers={}, files=[]):
-        if 'Authorization' not in headers:
-            if self.current_logged_user and "token" in self.current_logged_user and self.current_logged_user["token"]:
-                headers['Authorization'] = f'Bearer {self.current_logged_user["token"]}'
+    async def request(self, method: str, url: str, json_data: dict = None, data: dict = None, params=None, headers={}, files=[]):
+        #if 'Authorization' not in headers:
+        if self.current_logged_user and "token" in self.current_logged_user and self.current_logged_user["token"]:
+            headers['Authorization'] = f'Bearer {self.current_logged_user["token"]}'
         
+        if json_data:
+           json_data = json.loads(json.dumps(json_data, default=str))
+           
         response = self.client.request(
             method=method, url=url, json=json_data, data=data, params=params, headers=headers,
             cookies={'token': f'{self.current_logged_user["token"]}' if self.current_logged_user and "token" in self.current_logged_user else None, },
             files=files
         )
+        if response.status_code == 422:
+            return json.loads(response.text)
         return response
