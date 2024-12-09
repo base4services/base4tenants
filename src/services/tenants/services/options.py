@@ -12,7 +12,7 @@ from ._db_conn import get_conn_name
 logger = get_logger()
 
 
-@class_exception_traceback_logging(logger)
+#@class_exception_traceback_logging(logger)
 class OptionService(BaseService[models.Option]):
     def __init__(self):
         super().__init__(schemas.OptionSchema, models.Option, get_conn_name())

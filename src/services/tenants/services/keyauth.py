@@ -44,7 +44,7 @@ async def check_biznisoft_licence_on_thilo(key):
         raise
 
 
-@class_exception_traceback_logging(logger)
+#@class_exception_traceback_logging(logger)
 class KeyAuthService(BaseService[models.Tenant]):
     def __init__(self):
         super().__init__(schemas.UserSchema, models.User, get_conn_name())

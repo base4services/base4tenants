@@ -12,7 +12,7 @@ from ._db_conn import get_conn_name
 logger = get_logger()
 
 
-@class_exception_traceback_logging(logger)
+#@class_exception_traceback_logging(logger)
 class TenantsService(BaseService[models.Tenant]):
     def __init__(self):
         super().__init__(schemas.TenantSchema, models.Tenant, get_conn_name())

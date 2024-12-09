@@ -25,7 +25,7 @@ private_key = read_file('security/private_key.pem')
 public_key = read_file('security/public_key.pem')
 
 
-@class_exception_traceback_logging(logger)
+#@class_exception_traceback_logging(logger)
 class UsersService(BaseService[models.Tenant]):
     def __init__(self):
         super().__init__(schemas.UserSchema, models.User, get_conn_name())
