@@ -9,6 +9,7 @@ from base4.utilities.service.base import api
 from base4.utilities.service.startup import service as app
 from base4.utilities.service.base import BaseAPIHandler
 from fastapi import Request, APIRouter
+import base4.service.exceptions
 
 
 class APIService(BaseAPIHandler):
