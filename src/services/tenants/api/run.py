@@ -5,14 +5,16 @@ import services.tenants.schemas as schemas
 import services.tenants.services as services
 import services.tenants.models as models
 from services.tenants.schemas.me import LoginResponse, MeResponse
-from base4.utilities.service.base import api
-from base4.utilities.service.startup import service as app
+from base4.utilities.service.base import api, route
 from base4.utilities.service.base import BaseAPIHandler
 from fastapi import Request, APIRouter
 import base4.service.exceptions
 
 
-class APIService(BaseAPIHandler):
+router = APIRouter()
+
+@route(router=router, prefix='/api/tenants')
+class APIHandler(BaseAPIHandler):
     def __init__(self, router):
         self.service = services
         super().__init__(router)
@@ -75,8 +77,3 @@ class APIService(BaseAPIHandler):
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-        
-        
-router = APIRouter()
-APIService(router)
-app.include_router(router, prefix='/api/tenants')
