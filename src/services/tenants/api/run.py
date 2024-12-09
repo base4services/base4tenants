@@ -7,11 +7,11 @@ import services.tenants.models as models
 from services.tenants.schemas.me import LoginResponse, MeResponse
 from base4.utilities.service.base import api
 from base4.utilities.service.startup import service as app
-from base4.utilities.service.base import BaseAPIController
+from base4.utilities.service.base import BaseAPIHandler
 from fastapi import Request, APIRouter
 
 
-class APIService(BaseAPIController):
+class APIService(BaseAPIHandler):
     def __init__(self, router):
         self.service = services
         super().__init__(router)
