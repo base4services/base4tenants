@@ -20,7 +20,7 @@ class APIHandler(BaseAPIHandler):
         super().__init__(router)
         
     @api(
-        methods=['POST'],
+        method='POST',
         path='/users/login',
     )
     async def login(self, request: Request, data: schemas.LoginRequest) -> LoginResponse:
@@ -33,7 +33,7 @@ class APIHandler(BaseAPIHandler):
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
-        methods=['GET'],
+        method='GET',
         path='/users/me',
     )
     async def session(self, request: Request) -> MeResponse:
@@ -46,7 +46,7 @@ class APIHandler(BaseAPIHandler):
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
-        methods=['POST'],
+        method='POST',
         path='/key-auth',
     )
     async def key_auth(self, request: Request, data: schemas.KeyAuth) -> dict:
@@ -65,7 +65,7 @@ class APIHandler(BaseAPIHandler):
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
-        methods=['POST'],
+        method='POST',
         path='/initialize',
     )
     async def initialize(self, request: Request, data: schemas.InitializeFirstTenantRequest) -> dict:
