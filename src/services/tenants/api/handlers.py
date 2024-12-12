@@ -10,8 +10,8 @@ from base4.utilities.service.base import BaseAPIHandler
 from fastapi import Request, APIRouter
 import base4.service.exceptions
 
-
 router = APIRouter()
+
 
 @route(router=router, prefix='/api/tenants')
 class APIHandler(BaseAPIHandler):

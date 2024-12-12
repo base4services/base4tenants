@@ -50,11 +50,10 @@ class TestBaseTenantsAPIV2:
         assert 'token' in res.json()
         self.current_logged_user = {'username': 'admin', 'token': res.json()['token']}
         
-
     def get_app(self):
         for service in self.services:
             try:
-                module = importlib.import_module(f'services.{service}.api.run')
+                module = importlib.import_module(f'services.{service}.api.handlers')
                 self.app.include_router(module.router, prefix=f"/api/{service}")
             except Exception as e:
                 raise
