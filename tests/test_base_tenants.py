@@ -1,5 +1,6 @@
 import csv
 import datetime
+import inspect
 import ujson as json
 import os
 import pytest
@@ -52,11 +53,14 @@ class TestBaseTenantsAPIV2:
         
     def get_app(self):
         for service in self.services:
-            try:
-                module = importlib.import_module(f'services.{service}.api.handlers')
-                self.app.include_router(module.router, prefix=f"/api/{service}")
-            except Exception as e:
-                raise
+            module = importlib.import_module(f'services.{service}.api.handlers')
+            for api_handler in inspect.getmembers(module):
+                try:
+                    instance = api_handler[1]
+                    if hasattr(instance, 'router'):
+                        self.app.include_router(instance.router, prefix=f"/api/{service}")
+                except Exception as e:
+                    continue
 
     @pytest.fixture(autouse=True, scope="function")
     async def setup_fixture(self) -> None:

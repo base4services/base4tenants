@@ -89,6 +89,7 @@ class KeyAuthService(BaseService[models.Tenant]):
                     tenant=tenant,
                     password=key,
                     logged_user_id=default_id_user,
+                    role='user',
                 )
                 await service_user.save()
             except Exception as e:

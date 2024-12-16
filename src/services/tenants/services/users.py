@@ -41,6 +41,7 @@ class UsersService(BaseService[models.Tenant]):
             'username': user.username,
             'id_user': str(user.id),
             'id_tenant': str(user.tenant_id),
+            'role': str(user.role),
             'exp': int((datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()),
         }
 
@@ -73,7 +74,7 @@ class UsersService(BaseService[models.Tenant]):
             me = MeResponse(
                 id=user.id,
                 username=user.username,
-                id_tenant=user.tenant_id,
+                id_tenant=user.tenant_id
             )
 
             res = LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=me)
@@ -111,6 +112,7 @@ class UsersService(BaseService[models.Tenant]):
                 tenant=tenant,
                 username=username,
                 password=password,
+                role='master',
             )
         except Exception as e:
             raise

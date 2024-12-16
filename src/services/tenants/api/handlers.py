@@ -10,16 +10,15 @@ from base4.utilities.service.base import BaseAPIHandler
 from fastapi import Request, APIRouter
 import base4.service.exceptions
 
-router = APIRouter()
 
-
-@route(router=router, prefix='/api/tenants')
+@route(router=APIRouter(), prefix='/api/tenants')
 class APIHandler(BaseAPIHandler):
     def __init__(self, router):
         self.service = services
         super().__init__(router)
         
     @api(
+        is_authorized=True,
         method='POST',
         path='/users/login',
     )
