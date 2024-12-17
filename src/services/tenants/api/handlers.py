@@ -1,12 +1,8 @@
-import os
-import datetime
-from typing import Dict
 import services.tenants.schemas as schemas
 import services.tenants.services as services
 import services.tenants.models as models
 from services.tenants.schemas.me import LoginResponse, MeResponse
-from base4.utilities.service.base import api, route
-from base4.utilities.service.base import BaseAPIHandler
+from base4.utilities.service.base import BaseAPIHandler, api, route
 from fastapi import Request, APIRouter
 import base4.service.exceptions
 
@@ -18,7 +14,7 @@ class APIHandler(BaseAPIHandler):
         super().__init__(router)
         
     @api(
-        is_authorized=True,
+        is_authorized=False,
         method='POST',
         path='/users/login',
     )
