@@ -17,7 +17,7 @@ class TenantsService(BaseService[models.Tenant]):
     def __init__(self):
         super().__init__(schemas.TenantSchema, models.Tenant, get_conn_name())
 
-    async def initialize(self, request: schemas.InitializeFirstTenantRequest):
+    async def initialize(self, request: schemas.InitializeFirstTenantRequest) -> schemas.InitializeFirstTenantResponse:
 
         try:
             total_tenants = await self.model.all().count()
@@ -29,7 +29,11 @@ class TenantsService(BaseService[models.Tenant]):
 
         try:
             tenant = self.model(
-                logged_user_id=None, code=request.code, display_name=request.display_name if request.display_name else request.code.capitalize()
+                logged_user_id=None,
+                code=request.code,
+                display_name=request.display_name if request.display_name else request.code.capitalize(),
+                is_valid=True,
+                is_deleted=False
             )
 
             await tenant.save()
@@ -46,4 +50,7 @@ class TenantsService(BaseService[models.Tenant]):
         except Exception as e:
             raise
 
-        return {'id': str(tenant.id), 'id_user': user.id}
+        return schemas.InitializeFirstTenantResponse(
+            id_tenant = tenant.id,
+            id_user = user.id
+        )

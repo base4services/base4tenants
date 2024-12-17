@@ -17,7 +17,3 @@ class MeResponse(pydantic.BaseModel):
     '''
 
 
-class LoginResponse(pydantic.BaseModel):
-    token: str
-    exp: datetime.datetime
-    me: MeResponse
