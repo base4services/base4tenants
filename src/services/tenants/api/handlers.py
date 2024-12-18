@@ -60,6 +60,7 @@ class APIHandler(BaseAPIHandler):
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
     
     @api(
+        is_public=False,
         method='POST',
         path='/initialize',
     )
