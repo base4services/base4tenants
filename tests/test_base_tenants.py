@@ -39,7 +39,7 @@ class TestBaseTenantsAPIV2:
                 'display_name': self.default_tenant_code.capitalize(),
                 'master_username': 'admin',
                 'master_user_password': '123',
-            },
+            }
         )
 
         assert res.status_code == 200
