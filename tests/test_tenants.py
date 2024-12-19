@@ -10,5 +10,5 @@ class TestSVC(TestBaseTenantsAPIV2):
 		await super().setup()
 	
 	async def test_is_tenants_healthy(self):
-		response = await self.request(method='get', url="/api/tenants/healthy")
+		response = await self.request(method='get', url="/api/tenants/healthy", headers={'X-Tenant-ID': 'pass'})
 		assert response.status_code == 200
