@@ -98,6 +98,7 @@ class KeyAuthService(BaseService[models.Tenant]):
             payload = {
                 'username': service_user.username,
                 'id_user': str(service_user.id),
+                'role': str(service_user.role),
                 'id_tenant': str(service_user.tenant_id),
                 'exp': int(datetime.datetime.fromisoformat(licence_info['licence']['expiration_date']).timestamp()),
                 # 'exp': datetime.datetime.now() + datetime.timedelta(days=2),
