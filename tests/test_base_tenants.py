@@ -20,6 +20,7 @@ from base4.utilities.files import get_project_root
 
 project_root = get_project_root()
 
+
 @pytest.mark.asyncio
 class TestBaseTenantsAPIV2:
     services = []
