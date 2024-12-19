@@ -16,6 +16,9 @@ from base4.utilities.service.startup import service as app
 import uuid
 import httpx
 from httpx import AsyncClient
+from base4.utilities.files import get_project_root
+
+project_root = get_project_root()
 
 @pytest.mark.asyncio
 class TestBaseTenantsAPIV2:
@@ -53,14 +56,19 @@ class TestBaseTenantsAPIV2:
         
     def get_app(self):
         for service in self.services:
-            module = importlib.import_module(f'services.{service}.api.handlers')
-            for api_handler in inspect.getmembers(module):
-                try:
-                    instance = api_handler[1]
-                    if hasattr(instance, 'router'):
-                        self.app.include_router(instance.router, prefix=f"/api/{service}")
-                except Exception as e:
-                    continue
+            for service in os.listdir(f"{project_root}/src/services"):
+                if os.path.isdir(f"{project_root}/src/services/{service}"):
+                    if '__' not in service:
+                        for api_handler_file in os.listdir(f"{project_root}/src/services/{service}/api"):
+                            if '__' not in api_handler_file:
+                                module = importlib.import_module(f'services.{service}.api.{api_handler_file[:-3]}')
+                                for api_handler in inspect.getmembers(module):
+                                    try:
+                                        if hasattr(api_handler[1], 'router'):
+                                            obj = api_handler[1]
+                                            self.app.include_router(obj.router, prefix=f"/api/{service}")
+                                    except Exception as e:
+                                        continue
 
     @pytest.fixture(autouse=True, scope="function")
     async def setup_fixture(self) -> None:
