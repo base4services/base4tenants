@@ -70,3 +70,7 @@ user:
   mobile_phone:
     mandatory: False
     type: str
+
+  role:
+    mandatory: True
+    type: str
