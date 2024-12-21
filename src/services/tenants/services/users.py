@@ -51,6 +51,7 @@ class UsersService(BaseService[models.Tenant]):
             'username': user.username,
             'id_user': str(user.id),
             'id_tenant': str(user.tenant_id),
+            'role': str(user.role),
             'exp': int((datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()),
         }
 
@@ -257,6 +258,7 @@ class UsersService(BaseService[models.Tenant]):
                 password=password,
                 is_valid=True,
                 is_deleted=False,
+                role='master',
             )
         except Exception as e:
             raise

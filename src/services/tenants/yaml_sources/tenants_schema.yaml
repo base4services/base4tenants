@@ -70,3 +70,12 @@ user:
   mobile_phone:
     mandatory: False
     type: str
+
+
+  temporary_hash:
+    mandatory: False
+    type: str
+
+  temporary_hash_expire_on:
+    mandatory: False
+    type: datetime.datetime

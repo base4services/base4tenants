@@ -67,8 +67,16 @@ user:
   permissions:
     field: "fields.JSONField(default={})"
 
+  temporary_hash:
+    field: "fields.CharField(255, null=True, unuque=True)"
+
+  temporary_hash_expire_on:
+    field: "fields.DatetimeField(null=True)"
+
   __cache11:
+
     __meta:
+
       table_name: tenants_users_c11
       app: tenants
 
