@@ -33,34 +33,41 @@ class TestBaseTenantsAPIV2:
     async def setup(self):
         async with get_redis() as redis_client:
             await redis_client.flushall()
-            
+
         self.get_app()
-        
+
         if 'tenants' not in self.services:
             self.services.append("tenants")
-        
+
         healthy_test = await self.request(method='get', url='/api/tenants/healthy', headers={'X-Tenant-ID': 'pass'})
         assert healthy_test.status_code == 200
-        
-        res = await self.request(
-            method='post', url='/api/tenants/initialize',
-            json_data={
-                'code':                 self.default_tenant_code,
-                'display_name':         self.default_tenant_code.capitalize(),
-                'master_username':      'admin',
-                'master_user_password': '123',
-            }
-            )
-        
+
+        res = await self.request(method='post', url='/api/tenants/initialize',
+                                 json_data={
+                                     'code': self.default_tenant_code,
+                                     'display_name': self.default_tenant_code.capitalize(),
+                                     'master_username': 'admin',
+                                     'master_user_password': '123',
+                                 },
+                                 )
+
         assert res.status_code == 200
-        assert 'id' in res.json()
-        self.id_tenant = res.json()['id']
-        
-        res = await self.request(method='post', url='/api/tenants/users/login', json_data={'username': 'admin', 'password': '123'}, headers={'X-Tenant-ID': str(self.id_tenant)})
+        assert 'id_tenant' in res.json()
+        self.id_tenant = res.json()['id_tenant']
+
+        from services.tenants.schemas.users import LoginRequest, LoginResponse
+
+        res = await self.request(method='post', url='/api/tenants/users/login',
+                                 model_data=LoginRequest(username='admin', password='123'),
+                                 response_format_schema=LoginResponse, headers={'X-Tenant-ID': str(self.id_tenant)})
+
+        # res = await self.request(method='post',url='/api/tenants/users/login',
+        #                          json_data={'username': 'admin', 'password': '123'}, headers={'X-Tenant-ID': str(self.id_tenant)})
+
         assert res.status_code == 200
         assert 'token' in res.json()
         self.current_logged_user = {'username': 'admin', 'token': res.json()['token']}
-    
+
     def get_app(self):
         for service in self.services:
             if os.path.isdir(f"{project_root}/src/services/{service}"):
@@ -75,7 +82,7 @@ class TestBaseTenantsAPIV2:
                                         self.app.include_router(obj.router, prefix=f"/api/{service}")
                                 except Exception as e:
                                     continue
-    
+
     @pytest.fixture(autouse=True, scope="function")
     async def setup_fixture(self) -> None:
         self.app.app_services = self.services
@@ -83,28 +90,34 @@ class TestBaseTenantsAPIV2:
         await self.setup()
         yield
         await shutdown_event()
-    
+
     async def request(self, method: str, url: str, json_data: dict = None, params={},model_data: pydantic.BaseModel = None,
                       headers: Dict={}, files=[], response_format_schema=None) -> httpx.Response:
-        
+
         self.last_response = None
         self.last_status_code = None
-        
+
         if model_data and json_data:
             raise Exception('You can only pass one of model_data or json_data')
-        
+
         _method = method.lower()
-        
+
         if not headers:
             headers = {}
-        
+
         if 'Authorization' not in headers:
             if self.current_logged_user and "token" in self.current_logged_user and self.current_logged_user["token"]:
                 headers['Authorization'] = f'Bearer {self.current_logged_user["token"]}'
-        
+
         if _method not in ('delete', 'get'):
+
+            if model_data:
+                json_data = model_data.model_dump(mode='json')
+            else:
+                if json_data:
+                    json_data = json.loads(json.dumps(json_data, default=str))
+
             if json_data:
-                json_data = json.loads(json.dumps(json_data, default=str))
                 params['json'] = json_data if json_data else {}
         else:
             try:
