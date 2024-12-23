@@ -1,6 +1,4 @@
 import services.tenants.schemas as schemas
-import services.tenants.services as services
-import services.tenants.models as models
 from services.tenants.schemas.me import LoginResponse, MeResponse
 from base4.utilities.service.base import BaseAPIHandler, api, route
 from services.tenants.schemas.users import RegisterUserRequest, RegisterUserResponse, LoginRequest, LoginResponse, ForgotPasswordRequest
@@ -21,49 +19,49 @@ class APIHandler(BaseAPIHandler):
         self.tenants_service = TenantsService()  # REMVOE KAD RAZDVOJIS
         self.user_service = UsersService()
         super().__init__(router)
-    
+
     @api(
         is_authorized=False,
         method='POST',
         path='/users/login',
     )
     async def login(self, request: Request, data: schemas.LoginRequest) -> LoginResponse:
-        service = self.user_service.UsersService()
         try:
-            return await service.login(data)
+            return await self.user_service.login(request, data)
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-    
+
     @api(
         method='GET',
         path='/users/me',
     )
     async def session(self, request: Request) -> MeResponse:
         try:
-            return await self.tenants_service.me(self.session)
+            return await self.user_service.me(self.session)
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-    
+
     @api(
         is_public=False,
         method='POST',
         path='/initialize',
     )
-    async def initialize(self, request: Request, data: schemas.InitializeFirstTenantRequest) -> dict:
-        service = self.tenants_service.TenantsService()
+    async def initialize(self, request: Request, data: schemas.InitializeFirstTenantRequest):
         try:
-            return await service.initialize(data)
-        
+            res = await self.tenants_service.initialize(data)
+            return res
+
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-    
+
     @api(
+        is_authorized=False,
         method='POST',
         path='/users/reset-password/reset-password-code/{reset_password_code}',
     )
@@ -74,8 +72,9 @@ class APIHandler(BaseAPIHandler):
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-    
+
     @api(
+        is_authorized=False,
         method='POST',
         path='/users/forgot-password',
     )
@@ -86,8 +85,9 @@ class APIHandler(BaseAPIHandler):
             raise se.make_http_exception()
         except Exception as e:
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
-    
+
     @api(
+        is_authorized=False,
         method='POST',
         path='/users/activate/activation-code/{activation_code}',
     )
@@ -103,6 +103,7 @@ class APIHandler(BaseAPIHandler):
             )
 
     @api(
+        is_authorized=False,
         method='POST',
         path='/security/check-password-strength',
     )
@@ -111,8 +112,9 @@ class APIHandler(BaseAPIHandler):
             return self.security_service.check_password_strength(data.password)
         except Exception as e:
             raise
-    
+
     @api(
+        is_authorized=False,
         method='POST',
         path='/users/register',
     )
