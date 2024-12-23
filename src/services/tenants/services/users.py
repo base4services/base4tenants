@@ -85,6 +85,7 @@ class UsersService(BaseService[models.Tenant]):
                 email=data.email.strip().lower(),
                 temporary_hash=str(uuid.uuid4()),
                 temporary_hash_expire_on=tortoise.timezone.now() + datetime.timedelta(days=7),
+                role='user'
             )
 
             await user.save()
