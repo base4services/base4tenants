@@ -27,6 +27,8 @@ class RegisterUserRequest(pydantic.BaseModel):
     last_name: Optional[str | None] = None
     email: Optional[str | None] = None
     mobile_phone: Optional[str | None] = None
+    profile_picture: Optional[str | None] = None
+    lang: Optional[str | None] = None
 
 
 class RegisterUserResponse(pydantic.BaseModel):

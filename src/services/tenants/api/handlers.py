@@ -34,12 +34,36 @@ class APIHandler(BaseAPIHandler):
             raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
 
     @api(
+        method='POST',
+        path='/users/logout',
+    )
+    async def logout(self, request: Request):
+        try:
+            return await self.user_service.logout(request)
+        except base4.service.exceptions.ServiceException as se:
+            raise se.make_http_exception()
+        except Exception as e:
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
+
+    @api(
         method='GET',
         path='/users/me',
     )
-    async def session(self, request: Request) -> MeResponse:
+    async def me(self, request: Request) -> MeResponse:
         try:
             return await self.user_service.me(self.session)
+        except base4.service.exceptions.ServiceException as se:
+            raise se.make_http_exception()
+        except Exception as e:
+            raise base4.service.exceptions.HTTPException(500, detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)})
+
+    @api(
+        method='PATCH',
+        path='/users/me',
+    )
+    async def change_own_attribute(self, request: Request, data: schemas.ChangeMyPreferencesRequest):
+        try:
+            return await self.user_service.change_me(request, data)
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:
@@ -121,6 +145,21 @@ class APIHandler(BaseAPIHandler):
     async def register(self, request: Request, data: RegisterUserRequest):  # -> RegisterUserResponse:
         try:
             return await self.user_service.register(data, request)
+        except base4.service.exceptions.ServiceException as se:
+            raise se.make_http_exception()
+        except Exception as e:
+            raise base4.service.exceptions.HTTPException(
+                500,
+                detail={'code': 'INTERNAL_SERVER_ERROR', 'message': str(e)}
+            )
+
+    @api(
+        method='POST',
+        path='/users/change-password',
+    )
+    async def change_password(self, request: Request, data: security_schemas.ChangePasswordRequest):
+        try:
+            return await self.user_service.change_password(request, data)
         except base4.service.exceptions.ServiceException as se:
             raise se.make_http_exception()
         except Exception as e:

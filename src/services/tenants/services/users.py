@@ -2,7 +2,7 @@ import datetime
 import os
 import uuid
 import json
-
+from typing import List, Dict
 import fastapi
 import tortoise.timezone
 import dotenv
@@ -11,7 +11,7 @@ from base4.service.base import BaseService
 from base4.service.exceptions import ServiceException
 from base4.utilities.logging.setup import class_exception_traceback_logging, get_logger
 from tortoise.exceptions import IntegrityError
-
+import services.tenants.schemas as schemas
 import shared.common as common
 
 import services.tenants.models.generated_tenants_model as models
@@ -23,6 +23,7 @@ from base4.utilities.db.async_redis import get_redis
 from fastapi import Request
 
 from ._db_conn import get_conn_name
+from shared.services.tenants.schemas.me import Me
 
 logger = get_logger()
 
@@ -46,8 +47,13 @@ class UsersService(BaseService[models.Tenant]):
 
         return user.password == password
 
+    def encode_password(self, password):
+
+        return password
+
     def generate_token_payload(self, user):
         return {
+            'session': str(uuid.uuid4()),
             'username': user.username,
             'id_user': str(user.id),
             'id_tenant': str(user.tenant_id),
@@ -82,9 +88,14 @@ class UsersService(BaseService[models.Tenant]):
                 tenant=tenant,
                 username=data.username,
                 password=data.password,
+                first_name=data.first_name,
+                last_name=data.last_name,
+                mobile_phone=data.mobile_phone,
+                profile_picture=data.profile_picture,
                 email=data.email.strip().lower(),
                 temporary_hash=str(uuid.uuid4()),
                 temporary_hash_expire_on=tortoise.timezone.now() + datetime.timedelta(days=7),
+                lang=data.lang,
                 role='user'
             )
 
@@ -137,6 +148,20 @@ class UsersService(BaseService[models.Tenant]):
 
         return users_schemas.ActivateUserResponse(active=user.is_valid)
 
+    @staticmethod
+    def user2me(user):
+        return MeResponse(
+            id=user.id,
+            username=user.username,
+            id_tenant=user.tenant_id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            mobile_phone=user.mobile_phone,
+            profile_picture=user.profile_picture,
+            lang=user.lang,
+        )
+
     async def login(self, request: Request, data: users_schemas.LoginRequest) -> users_schemas.LoginResponse:
 
         tenant = await common.get_tenant_from_headers(models.Tenant, request)
@@ -151,19 +176,26 @@ class UsersService(BaseService[models.Tenant]):
 
         payload = self.generate_token_payload(user)
 
-        try:
-            me = MeResponse(
-                id=user.id,
-                username=user.username,
-                id_tenant=user.tenant_id,
-            )
+        import base4.utilities.db.async_redis as async_redis
 
-            res = users_schemas.LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=me)
+        try:
+            async with async_redis.get_redis() as redis:
+                await redis.set_value(f"session:{payload['session']}", json.dumps(payload))  # ex=payload['exp'] - int(datetime.datetime))
+
+            res = users_schemas.LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=self.user2me(user))
 
             return res
 
         except Exception as e:
             raise
+
+    async def logout(self, request: Request) -> Dict:
+
+        me = await Me.get(request)
+        async with get_redis() as redis:
+            await redis.delete_key(f"session:{me.id_session}")
+
+        return {"action": "logged-out"}
 
     async def forgot_password(self, request: Request, data: users_schemas.ForgotPasswordRequest) -> None:
 
@@ -232,18 +264,33 @@ class UsersService(BaseService[models.Tenant]):
     async def me(self, session) -> MeResponse:
 
         try:
-            me = await self.model.filter(id=session.user_id, tenant_id=session.tenant_id, is_deleted=False).get_or_none()
-
-            res = MeResponse(
-                id=me.id,
-                username=me.username,
-                id_tenant=me.tenant_id,
-            )
-
+            user = await self.model.filter(id=session.user_id, tenant_id=session.tenant_id, is_deleted=False).get_or_none()
+            return self.user2me(user)
         except Exception as e:
             raise
 
-        return res
+    async def change_me(self, request: Request, data: schemas.ChangeMyPreferencesRequest) -> List[str]:
+
+        try:
+            me = await Me.get(request)
+        except Exception as e:
+            raise
+
+        user = await self.model.filter(tenant=me.id_tenant, id=me.id, is_valid=True, is_deleted=False).get_or_none()
+
+        if not user:
+            raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
+
+        updated = []
+        for attr in schemas.ChangeMyPreferencesRequest.model_fields: #('first_name','last_name','email','mobile_phone'):
+            if hasattr(data, attr) and getattr(data, attr) and getattr(data, attr) != getattr(user, attr):
+                setattr(user, attr, getattr(data, attr))
+                updated.append(attr)
+
+        if updated:
+            await user.save()
+
+        return updated
 
     async def create_master_user_only_if_there_is_one_tenant_and_no_users(self, tenant, username, password):
 
@@ -266,3 +313,31 @@ class UsersService(BaseService[models.Tenant]):
 
         await user.save()
         return user
+
+    # def me(self, request):
+    #     token = request.headers.get('Authorization')
+    #     token = token.replace('Bearer ', '')
+    #
+    #     from base4.utilities.security.jwt import decode_token
+    #     session = decode_token(token)
+
+
+    async def change_password(self, request: Request, data: security_schemas.ChangePasswordRequest):
+
+
+        me = await Me.get(request)
+
+        user = await self.model.filter(tenant=me.id_tenant, id=me.id, is_valid=True, is_deleted=False).get()
+        if not user:
+            raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
+
+        if not self.check_password(user, data.old_password):
+            raise ServiceException('INVALID_PASSWORD', 'Current password is not correct', status_code=401)
+
+        if data.new_password == data.old_password:
+            raise ServiceException('SAME_PASSWORD', 'New password is the same as the old one', status_code=406)
+
+        user.password = self.encode_password(data.new_password)
+        await user.save()
+
+        return {'changed': True}

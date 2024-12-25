@@ -71,7 +71,6 @@ user:
     mandatory: False
     type: str
 
-
   temporary_hash:
     mandatory: False
     type: str
@@ -79,3 +78,7 @@ user:
   temporary_hash_expire_on:
     mandatory: False
     type: datetime.datetime
+
+  lang:
+    mandatory: False
+    type: str

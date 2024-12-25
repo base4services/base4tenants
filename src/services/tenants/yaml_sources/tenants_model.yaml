@@ -73,6 +73,9 @@ user:
   temporary_hash_expire_on:
     field: "fields.DatetimeField(null=True)"
 
+  lang:
+    field: "fields.CharField(16, null=True, default='en')"
+
   __cache11:
 
     __meta:
