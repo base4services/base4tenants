@@ -13,7 +13,7 @@ from base4.utilities.logging.setup import class_exception_traceback_logging, get
 from tortoise.exceptions import IntegrityError
 import services.tenants.schemas as schemas
 import shared.common as common
-
+from base4.utilities.totp import generate_totp_secret, get_totp_uri, verify_totp_token
 import services.tenants.models.generated_tenants_model as models
 import services.tenants.schemas.users as users_schemas
 import services.tenants.schemas.security as security_schemas
@@ -69,7 +69,6 @@ class UsersService(BaseService[models.Tenant]):
         try:
 
             encoded_jwt = jwt.encode(payload, private_key, algorithm='RS256')
-            # encoded_jwt = jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
         except Exception as e:
             raise
         return encoded_jwt
@@ -96,7 +95,8 @@ class UsersService(BaseService[models.Tenant]):
                 temporary_hash=str(uuid.uuid4()),
                 temporary_hash_expire_on=tortoise.timezone.now() + datetime.timedelta(days=7),
                 lang=data.lang,
-                role='user'
+                role='user',
+                registration_provider='base4'
             )
 
             await user.save()
@@ -112,7 +112,7 @@ class UsersService(BaseService[models.Tenant]):
         SERVICES_TENANTS_ACTIVATION_LINK = SERVICES_TENANTS_ACTIVATION_LINK.format(user.temporary_hash)
 
         email_request = EmailRequest(
-            sender=NameEmail(name='ChosenAPP',email='info@digitalcube.rs'),
+            sender=NameEmail(name=os.getenv('app_name', ''),email='do-not-reply@digitalcube.rs'),
             to=[NameEmail(name=data.username.split('@')[0],email=data.email)],
             subject='Activate your account',
             body=f'Please click on this link to activate your account: {SERVICES_TENANTS_ACTIVATION_LINK}')
@@ -221,7 +221,7 @@ class UsersService(BaseService[models.Tenant]):
 
         try:
             email_request = EmailRequest(
-                sender=NameEmail(name='ChosenAPP', email='info@digitalcube.rs'),
+                sender=NameEmail(name=os.getenv('app_name', ''), email='do-not-reply@digitalcube.rs'),
                 to=[NameEmail(name=data.email.split('@')[0],email=data.email)],
                 subject='Reset your password',
                 body=f'Please click on this link to reset your password: {SERVICES_TENANTS_RESET_PASSWORD_LINK}')
@@ -307,6 +307,7 @@ class UsersService(BaseService[models.Tenant]):
                 is_valid=True,
                 is_deleted=False,
                 role='master',
+                registration_provider='base4'
             )
         except Exception as e:
             raise
@@ -341,3 +342,84 @@ class UsersService(BaseService[models.Tenant]):
         await user.save()
 
         return {'changed': True}
+
+
+    async def oauth_check_is_users_exits(self, request: Request, username: str):
+
+        user = await self.model.filter(username=username, is_valid=True, is_deleted=False).get()
+        if not user:
+            raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
+        return user
+
+    async def oauth_register(self, request: Request, provider: str, user_info: dict):
+
+        tenant = await common.get_tenant_from_headers(models.Tenant, request)
+
+        username = user_info.get("email") or user_info.get("username")
+        if await self.model.filter(tenant=tenant, username=username).count():
+            raise ServiceException('USER_ALREADY_EXISTS', 'User already exists', status_code=406)
+
+        oauth_user_info = user_info.get("oauth_user_info")
+
+        try:
+            user = self.model(
+                logged_user_id=default_id_user,
+                tenant=tenant,
+                username=oauth_user_info['email'],
+                password=str(uuid.uuid4()),
+                first_name=oauth_user_info['given_name'],
+                last_name=oauth_user_info['family_name'],
+                mobile_phone=oauth_user_info.get('mobile_phone'),
+                profile_picture=oauth_user_info.get('picture'),
+                email=oauth_user_info['email'],
+                temporary_hash=str(uuid.uuid4()),
+                temporary_hash_expire_on=tortoise.timezone.now() + datetime.timedelta(days=7),
+                lang='en',  # todo, sredi ako se ne vraca za oauth onda da se iscita default lang iz tenant-a / konfiga
+                role='user',
+                registration_provider=provider
+            )
+
+            await user.save()
+        except IntegrityError:
+            raise ServiceException('ERROR_ADDING_USER', 'User already exists', status_code=500)
+        except Exception as e:
+            raise
+
+        from shared.services.sendmail.schemas.email_schema import EmailRequest, NameEmail
+        from shared.services.sendmail.sendmail import enqueue_to_redis
+
+        # send email with activation link
+        SERVICES_TENANTS_ACTIVATION_LINK = os.getenv('SERVICES_TENANTS_ACTIVATION_LINK', '{}')
+        SERVICES_TENANTS_ACTIVATION_LINK = SERVICES_TENANTS_ACTIVATION_LINK.format(user.temporary_hash)
+
+        email_request = EmailRequest(
+            sender=NameEmail(name=os.getenv('app_name', ''), email='do-not-reply@digitalcube.rs'),
+            to=[NameEmail(name=oauth_user_info['name'], email=username)],
+            subject='Activate your account',
+            body=f'Please click on this link to activate your account: {SERVICES_TENANTS_ACTIVATION_LINK}')
+
+        await enqueue_to_redis(email_request)
+
+        if os.getenv('TEST_MODE', 'False') != 'true':
+            import shared.services.sendmail.sendmail as sendmail
+            await sendmail.send_next()
+
+        # login after registration
+        payload = self.generate_token_payload(user)
+        import base4.utilities.db.async_redis as async_redis
+
+        try:
+            async with async_redis.get_redis() as redis:
+                await redis.set_value(f"session:{payload['session']}", json.dumps(payload))  # ex=payload['exp'] - int(datetime.datetime))
+
+            res = users_schemas.LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=self.user2me(user))
+            return res
+        except Exception as e:
+            raise
+
+    async def save_totp_secret(self, request: Request, username: str):
+
+        if user.totp_secret is None:
+            user.totp_secret = generate_totp_secret()
+
+        return user.totp_secret

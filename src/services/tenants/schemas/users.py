@@ -7,6 +7,7 @@ import uuid
 
 from .me import MeResponse
 
+
 class LoginRequest(pydantic.BaseModel):
     username: str
     password: str
@@ -17,8 +18,10 @@ class LoginResponse(pydantic.BaseModel):
     exp: datetime.datetime
     me: MeResponse
 
+
 class ForgotPasswordRequest(pydantic.BaseModel):
     email: str
+
 
 class RegisterUserRequest(pydantic.BaseModel):
     username: str
@@ -34,6 +37,15 @@ class RegisterUserRequest(pydantic.BaseModel):
 class RegisterUserResponse(pydantic.BaseModel):
     registration_control_id: uuid.UUID
 
+
 class ActivateUserResponse(pydantic.BaseModel):
     active: bool
 
+
+class OauthLoginRequest(pydantic.BaseModel):
+    email: str
+
+
+class OauthTokenResponse(pydantic.BaseModel):
+    access_token: str
+    token_type: str = "bearer"

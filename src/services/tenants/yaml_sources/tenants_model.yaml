@@ -35,7 +35,7 @@ user:
     unique_together: ( ('tenant', 'username' ), )
 
   tenant:
-    field: "fields.ForeignKeyField('tenants.Tenant', index=True, on_delete=tortoise.fields.base.OnDelete.RESTRICT, related_name='users')"
+    field: "fields.ForeignKeyField('tenants.Tenant',db_index=True, on_delete=tortoise.fields.base.OnDelete.RESTRICT, related_name='users')"
 
   username:
     field: "fields.CharField(255, null=True)"
@@ -67,6 +67,9 @@ user:
   permissions:
     field: "fields.JSONField(default={})"
 
+  registration_provider:
+    field: "fields.CharField(64)"
+
   temporary_hash:
     field: "fields.CharField(255, null=True, unuque=True)"
 
@@ -84,4 +87,4 @@ user:
       app: tenants
 
     user:
-      field: "fields.OneToOneField('tenants.User', index=True, related_name='cache11')"
+      field: "fields.OneToOneField('tenants.User',db_index=True, related_name='cache11')"

@@ -16,10 +16,10 @@ from fastapi.testclient import TestClient
 from base4.utilities.service.startup import service as app
 import uuid
 import httpx
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from base4.utilities.files import get_project_root
 from base4.utilities.db.async_redis import get_redis
-
+from shared.schemas.crapi import CRApi, CRApiHeader
 project_root = get_project_root()
 
 
@@ -29,7 +29,7 @@ class TestBaseTenantsAPIV2:
     app: FastAPI = FastAPI()
     default_tenant_code = "TEST"
     current_logged_user = None
-    
+
     async def setup(self):
         async with get_redis() as redis_client:
             await redis_client.flushall()
@@ -124,11 +124,11 @@ class TestBaseTenantsAPIV2:
                 del params['json']
             except:
                 pass
-        
+
         params['url'] = url
         params['headers'] = headers
-        
-        async with httpx.AsyncClient(app=self.app, base_url='https://test') as client:
+
+        async with httpx.AsyncClient(transport=ASGITransport(app=self.app), base_url='https://test') as client:
             client.cookies.set(
                 'token',
                 f'{self.current_logged_user["token"]}' if self.current_logged_user and "token" in self.current_logged_user else None,
@@ -136,18 +136,18 @@ class TestBaseTenantsAPIV2:
             func = getattr(client, _method, None)
             if not func:
                 raise Exception(f'Invalid method: {_method}')
-            
+
             try:
                 response = await func(**params)
             except Exception as e:
                 raise
-            
+
             self.last_status_code = response.status_code
             self.last_response = response.json()
 
             if response.status_code in (200, 201):
                 if response_format_schema:
-                    resp = response_format_schema.parse_obj(response.json())
+                    resp = response_format_schema.model_validate(response.json())
                     assert resp
                     assert resp.model_dump(mode='json') == response.json()
                     self.last_response = resp

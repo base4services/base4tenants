@@ -71,6 +71,18 @@ user:
     mandatory: False
     type: str
 
+  role:
+    mandatory: True
+    type: str
+
+  permissions:
+    mandatory: False
+    type: dict
+
+  registration_provider:
+    mandatory: True
+    type: str
+
   temporary_hash:
     mandatory: False
     type: str
