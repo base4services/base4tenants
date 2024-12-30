@@ -19,7 +19,6 @@ import httpx
 from httpx import AsyncClient, ASGITransport
 from base4.utilities.files import get_project_root
 from base4.utilities.db.async_redis import get_redis
-from shared.schemas.crapi import CRApi, CRApiHeader
 project_root = get_project_root()
 
 
