@@ -1,1 +1,1 @@
-authlib
+Authlib==1.4.0
