@@ -54,7 +54,7 @@ class User(BaseNoTenant, Model):
         app = "tenants"
         unique_together = (('tenant', 'username'),)
 
-    tenant = fields.ForeignKeyField('tenants.Tenant', index=True, on_delete=tortoise.fields.base.OnDelete.RESTRICT, related_name='users')
+    tenant = fields.ForeignKeyField('tenants.Tenant', db_index=True, on_delete=tortoise.fields.base.OnDelete.RESTRICT, related_name='users')
     username = fields.CharField(255, null=True)
     password = fields.CharField(255, null=True)
     display_name = fields.CharField(255, null=True)
@@ -101,7 +101,7 @@ class UserC11(BaseCache11, Model):
         table = "tenants_users_c11"
         app = "tenants"
 
-    user = fields.OneToOneField('tenants.User', index=True, related_name='cache11')
+    user = fields.OneToOneField('tenants.User', db_index=True, related_name='cache11')
 
     mk_cache_rules = []
 

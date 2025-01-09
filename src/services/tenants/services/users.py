@@ -166,21 +166,27 @@ class UsersService(BaseService[models.Tenant]):
 
         tenant = await common.get_tenant_from_headers(models.Tenant, request)
 
-        user = await self.model.filter(tenant=tenant, username=data.username, is_valid=True, is_deleted=False).get_or_none()
+        user = await self.model.filter(
+            tenant=tenant,
+            username=data.username,
+            is_valid=True,
+            is_deleted=False
+        ).get_or_none()
 
         if not user or not self.check_password(user, data.password):
-            raise ServiceException('INVALID_CREDENTIALS',
-                                   'Invalid credentials',
-                                   status_code=401
-                                   )
+            raise ServiceException(
+                'INVALID_CREDENTIALS',
+                'Invalid credentials',
+                status_code=401
+            )
 
         payload = self.generate_token_payload(user)
 
-        import base4.utilities.db.async_redis as async_redis
-
         try:
-            async with async_redis.get_redis() as redis:
-                await redis.set_value(f"session:{payload['session']}", json.dumps(payload))  # ex=payload['exp'] - int(datetime.datetime))
+            user_session = {'permissions': user.permissions}
+            user_session.update(payload)
+
+            await self.rdb.set(f"session:{payload['session']}", json.dumps(user_session))
 
             res = users_schemas.LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=self.user2me(user))
 
@@ -190,11 +196,7 @@ class UsersService(BaseService[models.Tenant]):
             raise
 
     async def logout(self, request: Request) -> Dict:
-
-        me = await Me.get(request)
-        async with get_redis() as redis:
-            await redis.delete_key(f"session:{me.id_session}")
-
+        await self.rdb.delete_key(f"session:{request.me.id_session}")
         return {"action": "logged-out"}
 
     async def forgot_password(self, request: Request, data: users_schemas.ForgotPasswordRequest) -> None:
@@ -271,12 +273,8 @@ class UsersService(BaseService[models.Tenant]):
 
     async def change_me(self, request: Request, data: schemas.ChangeMyPreferencesRequest) -> List[str]:
 
-        try:
-            me = await Me.get(request)
-        except Exception as e:
-            raise
 
-        user = await self.model.filter(tenant=me.id_tenant, id=me.id, is_valid=True, is_deleted=False).get_or_none()
+        user = await self.model.filter(tenant=request.me.id_tenant, id=request.me.id, is_valid=True, is_deleted=False).get_or_none()
 
         if not user:
             raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
@@ -304,6 +302,7 @@ class UsersService(BaseService[models.Tenant]):
                 tenant=tenant,
                 username=username,
                 password=password,
+                first_name=username.title(),
                 is_valid=True,
                 is_deleted=False,
                 role='master',
@@ -325,10 +324,7 @@ class UsersService(BaseService[models.Tenant]):
 
     async def change_password(self, request: Request, data: security_schemas.ChangePasswordRequest):
 
-
-        me = await Me.get(request)
-
-        user = await self.model.filter(tenant=me.id_tenant, id=me.id, is_valid=True, is_deleted=False).get()
+        user = await self.model.filter(tenant=request.me.id_tenant, id=request.me.id, is_valid=True, is_deleted=False).get()
         if not user:
             raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
 
@@ -409,17 +405,36 @@ class UsersService(BaseService[models.Tenant]):
         import base4.utilities.db.async_redis as async_redis
 
         try:
-            async with async_redis.get_redis() as redis:
-                await redis.set_value(f"session:{payload['session']}", json.dumps(payload))  # ex=payload['exp'] - int(datetime.datetime))
+            await self.rdb.set(f"session:{payload['session']}", json.dumps(payload))  # ex=payload['exp'] - int(datetime.datetime))
 
             res = users_schemas.LoginResponse(token=self.generate_token(payload), exp=payload['exp'], me=self.user2me(user))
             return res
         except Exception as e:
             raise
 
-    async def save_totp_secret(self, request: Request, username: str):
+    async def get_user(self, id_user: uuid.UUID, request: Request):
+        user = await self.model.filter(tenant=request.me.id_tenant,
+                                       id=id_user, is_valid=True, is_deleted=False).get()
+        if not user:
+            raise ServiceException('INVALID_USER', 'Invalid user', status_code=404)
 
-        if user.totp_secret is None:
-            user.totp_secret = generate_totp_secret()
+        return {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'mobile_phone': user.mobile_phone,
+            'profile_picture': user.profile_picture,
+            'lang': user.lang,
+            'display_name': ' '.join([x for x in [user.first_name, user.last_name] if x])
+        }
 
-        return user.totp_secret
+
+    # todo continue this
+    # async def save_totp_secret(self, request: Request, username: str):
+    #
+    #     if user.totp_secret is None:
+    #         user.totp_secret = generate_totp_secret()
+    #
+    #     return user.totp_secret
